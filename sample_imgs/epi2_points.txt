@@ -1,0 +1,14 @@
+p2 926 598
+p3 853 664
+shelf1 953 38
+shelf2 920 432
+chest1_1 117 449
+chest1_3 536 685
+chest1_4 533 345
+cupboard1_3 1196 467
+doorplate2_1 461 145
+doorplate2_2 462 173
+doorplate2_3 481 172
+doorplate2_4 481 145
+frame1_3 136 329
+frame1_4 103 33

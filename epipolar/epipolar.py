@@ -7,15 +7,23 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-camera_matrix0 =  np.loadtxt( "sample_imgs/epi0_calib.txt" )
-camera_matrix1 =  np.loadtxt( "sample_imgs/epi1_calib.txt" )
+fmt_img = "sample_imgs/epi{}.jpg"
+fmt_calib = "sample_imgs/epi{}_calib.txt"
+fmt_pts = "sample_imgs/epi{}_points.txt"
+fmt_res = "results/epi{}.jpg"
+tgts = [1, 2]
 
-img0 = cv2.imread("sample_imgs/epi0.jpg")
-img1 = cv2.imread("sample_imgs/epi1.jpg")
+img0 = cv2.imread(fmt_img.format(tgts[0]))
+img1 = cv2.imread(fmt_img.format(tgts[1]))
 h0, w0, _ = img0.shape
 h1, w1, _ = img1.shape
-pd0 = pd.read_csv("sample_imgs/epi0_points.txt", delimiter = ' ', header=None)
-pd1 = pd.read_csv("sample_imgs/epi1_points.txt", delimiter = ' ', header=None)
+
+
+camera_matrix0 =  np.loadtxt(fmt_calib.format(tgts[0]))
+camera_matrix1 =  np.loadtxt(fmt_calib.format(tgts[1]))
+
+pd0 = pd.read_csv(fmt_pts.format(tgts[0]), delimiter = ' ', header=None)
+pd1 = pd.read_csv(fmt_pts.format(tgts[1]), delimiter = ' ', header=None)
 
 C0 = -np.linalg.inv(camera_matrix0[:,:3]) @ camera_matrix0[:,3]
 C0 = np.append(C0,1)
@@ -63,6 +71,7 @@ for i in range(len(pts1)):
         l0 = np.append(pt1,1) @ F
         cv2.line(img0, (0, int(-l0[2]/l0[1])), (w0 , int(-(l0[0]*w0+l0[2])/l0[1])), color.tolist(), 1)
 
-cv2.imwrite('results/epi0.jpg', img0)
-cv2.imwrite('results/epi1.jpg', img1)
+
+cv2.imwrite(fmt_res.format(tgts[0]), img0)
+cv2.imwrite(fmt_res.format(tgts[1]), img1)
 
