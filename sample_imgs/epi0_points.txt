@@ -1,0 +1,16 @@
+p3 754 670
+p4 603 622
+cupboard1_1 241 83
+cupboard1_2 282 307
+cupboard1_3 655 140
+cupboard1_4 653 10
+cupboard1_5 139 80
+cupboard1_6 186 290
+counter1_1 376 511
+counter1_3 688 416
+counter1_4 699 265
+box1 254 666
+box4 366 570
+box5 94 605
+whiteboard2 815 88
+whiteboard3 872 61
