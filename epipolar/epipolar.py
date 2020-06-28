@@ -11,19 +11,18 @@ fmt_img = "sample_imgs/epi{}.jpg"
 fmt_calib = "sample_imgs/epi{}_calib.txt"
 fmt_pts = "sample_imgs/epi{}_points.txt"
 fmt_res = "results/epi{}.jpg"
-tgts = [1, 2]
+tgts = [0, 1]
 
 img0 = cv2.imread(fmt_img.format(tgts[0]))
 img1 = cv2.imread(fmt_img.format(tgts[1]))
 h0, w0, _ = img0.shape
 h1, w1, _ = img1.shape
 
-
 camera_matrix0 =  np.loadtxt(fmt_calib.format(tgts[0]))
 camera_matrix1 =  np.loadtxt(fmt_calib.format(tgts[1]))
 
-pd0 = pd.read_csv(fmt_pts.format(tgts[0]), delimiter = ' ', header=None)
-pd1 = pd.read_csv(fmt_pts.format(tgts[1]), delimiter = ' ', header=None)
+df0 = pd.read_csv(fmt_pts.format(tgts[0]), delimiter = ' ', header=None)
+df1 = pd.read_csv(fmt_pts.format(tgts[1]), delimiter = ' ', header=None)
 
 C0 = -np.linalg.inv(camera_matrix0[:,:3]) @ camera_matrix0[:,3]
 C0 = np.append(C0,1)
@@ -35,22 +34,22 @@ e0 = e0[:2]/e0[2]
 e1 = camera_matrix1 @ C0
 e1 = e1[:2]/e1[2] 
 
-cv2.circle(img0, tuple(e0.astype(int).tolist()), 5, (0,0,0),2)
-cv2.circle(img1, tuple(e1.astype(int).tolist()), 5, (0,0,0),2)
+cv2.circle(img0, tuple(e0.astype(int).tolist()), 5, (150,150,150),3)
+cv2.circle(img1, tuple(e1.astype(int).tolist()), 5, (150,150,150),3)
 
 def get_cross(A):
     return np.array([[0, -A[2], A[1]], [A[2], 0, -A[0]], [-A[1], A[0], 0]])
 F = get_cross(camera_matrix1 @ C0) @ camera_matrix1 @ np.linalg.pinv(camera_matrix0)
 
-pt_names0 = pd0.loc[:,0].tolist()
-pt_names1 = pd1.loc[:,0].tolist()
+pt_names0 = df0.loc[:,0].tolist()
+pt_names1 = df1.loc[:,0].tolist()
 
 pt_names_all = list(set(pt_names0).union(set(pt_names1)))
 colors = {}
 for pt_name in pt_names_all:
     colors[pt_name] = np.random.randint(256, size=3)
 
-pts0 = pd0.loc[:,1:].to_numpy()
+pts0 = df0.loc[:,1:].to_numpy()
 for i in range(len(pts0)):
     pt_name0 = pt_names0[i]
     color = colors[pt_name0]
@@ -61,7 +60,7 @@ for i in range(len(pts0)):
         cv2.line(img1, (0, int(-l1[2]/l1[1])), (w1 , int(-(l1[0]*w1+l1[2])/l1[1])), color.tolist(), 1)
 
 
-pts1 = pd1.loc[:,1:].to_numpy()
+pts1 = df1.loc[:,1:].to_numpy()
 for i in range(len(pts1)):
     pt_name1 = pt_names1[i]
     color = colors[pt_name1]
