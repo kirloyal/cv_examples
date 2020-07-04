@@ -3,8 +3,10 @@ import cv2
 import scipy
 import io
 import os 
+import functools
 import matplotlib.pyplot as plt
 import pandas as pd
+
 
 fmt_img = "sample_imgs/epi{}.jpg"
 fmt_calib = "sample_imgs/epi{}_calib.txt"
@@ -40,16 +42,14 @@ for i in range(n_tgt):
     for j in range(n_tgt):
         if i == j:
             continue
-        e = camera_matrixs[i] @ Cs[j]
-        e = e[:2]/e[2] 
-        es[i,j] = e
-        F = get_cross(camera_matrixs[j] @ Cs[i]) @ camera_matrixs[j] @ np.linalg.pinv(camera_matrixs[i])
+        e = camera_matrixs[j] @ Cs[i]
+        e = e/e[2] 
+        F = get_cross(e) @ camera_matrixs[j] @ np.linalg.pinv(camera_matrixs[i])
         Fs[i,j] = F
+        es[j,i] = e[:2]
 
-pt_names_all = set()
-for i in range(n_tgt):
-    pt_names_all = pt_names_all.union(set(dfs[i].loc[:,0].tolist()))
-pt_names_all = list(pt_names_all)
+pt_names = [dfs[i].loc[:,0].tolist() for i in range(n_tgt)]
+pt_names_all = list(functools.reduce(lambda x,y: set(x).union(set(y)), pt_names))
 colors = {}
 for pt_name in pt_names_all:
     colors[pt_name] = np.random.randint(256, size=3)
