@@ -64,12 +64,28 @@ def get_triangulation_approximate(xys, camera_matrixs):
 
     return X[:-1], s[-1]
     
+def get_triangulation_cv2(xys, camera_matrixs):
+    """
+    param xys : list of points in cameras
+    param camera_matrixs : np.array{ v x 3 x 4 }
+    return X,s : the point in 3d space and corresponding singular value
+    """
+    xyzs = []
+    for i in range(len(camera_matrixs)-1):
+        for j in range(i+1, len(camera_matrixs)):
+            xyzs.append(cv2.triangulatePoints(camera_matrixs[i], camera_matrixs[j], xys[i].astype(float), xys[j].astype(float)))
+    xyzs = np.array(xyzs, dtype=float)[...,0]
+    xyzs /= xyzs[:,-1:]
+    xyz = xyzs.mean(0)
+    return xyz[:3], None
+
 pt_names = [dfs[i].loc[:,0].tolist() for i in range(n_tgt)]
 pt_names_all = list(functools.reduce(lambda x,y: set(x).union(set(y)), pt_names))
 pt_xys = [dfs[i].loc[:,1:].to_numpy() for i in range(n_tgt)]
 colors = {}
 xyzs_approx = {}
 xyzs_exact = {}
+xyzs_cv2 = {}
 for pt_name in pt_names_all:
     colors[pt_name] = np.random.randint(256, size=3)
     xys_valid = []
@@ -79,10 +95,16 @@ for pt_name in pt_names_all:
             idx = pt_names[i].index(pt_name)
             xys_valid.append(pt_xys[i][idx])
             camera_matrixs_valid.append(camera_matrixs[i])
-    xyz, err = get_triangulation_approximate(np.vstack(xys_valid), np.array(camera_matrixs_valid))
-    xyzs_approx[pt_name] = xyz, err
-    xyz, err = get_triangulation_exact(np.vstack(xys_valid), np.array(camera_matrixs_valid))
-    xyzs_exact[pt_name] = xyz, err
+    if len(camera_matrixs_valid) >= 2:
+        xyz, err = get_triangulation_exact(np.vstack(xys_valid), np.array(camera_matrixs_valid))
+        xyzs_exact[pt_name] = xyz, err
+        xyz, err = get_triangulation_approximate(np.vstack(xys_valid), np.array(camera_matrixs_valid))
+        xyzs_approx[pt_name] = xyz, err
+        xyz, err = get_triangulation_cv2(np.vstack(xys_valid), np.array(camera_matrixs_valid))
+        xyzs_cv2[pt_name] = xyz, err
+
+for pt_name in xyzs_exact.keys():
+    print(pt_name, np.linalg.norm(xyzs_exact[pt_name][0] - xyzs_approx[pt_name][0]), np.linalg.norm(xyzs_exact[pt_name][0] - xyzs_cv2[pt_name][0]) )
 
 
 for i in range(n_tgt):
@@ -98,22 +120,21 @@ for i in range(n_tgt):
             e = e/e[2] 
             cv2.circle(imgs[i], tuple(e[:2].astype(int).tolist()), 5, (0, 0, 0), -1)
             cv2.circle(imgs[i], tuple(e[:2].astype(int).tolist()), 3, (150,150,150), -1)
-        for pt_name in pt_names_all:
+        for pt_name in xyzs_exact.keys():
             if pt_name in pt_names[i]:
                 xyz = xyzs_approx[pt_name]
                 xy1 = camera_matrixs[i] @ np.append(xyz[0],1)
                 xy1 = xy1/xy1[-1] 
                 xy = xy1[:-1]
-                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 4, (0, 0, 255), -1)
-                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 2, colors[pt_name].tolist(), -1)
+                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 3, (0, 0, 255), -1)
+                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 1, colors[pt_name].tolist(), -1)
 
                 xyz = xyzs_exact[pt_name]
                 xy1 = camera_matrixs[i] @ np.append(xyz[0],1)
                 xy1 = xy1/xy1[-1] 
                 xy = xy1[:-1]
-                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 4, (255, 0, 0), -1)
-                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 2, colors[pt_name].tolist(), -1)
+                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 3, (255, 0, 0), -1)
+                cv2.circle(imgs[i], tuple(xy.astype(int).tolist()), 1, colors[pt_name].tolist(), -1)
                             
-
-
     cv2.imwrite(fmt_res.format(tgts[i]), imgs[i])
+
